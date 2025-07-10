@@ -172,6 +172,24 @@
             background: #c82333;
         }
 
+        .btn-warning {
+            background: #fd7e14;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e8681c;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
         .inventory-section {
             padding: 30px;
         }
@@ -195,6 +213,60 @@
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: bold;
+        }
+
+        .backup-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .backup-section h4 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .backup-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .backup-buttons .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .backup-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .backup-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .backup-warning strong {
+            color: #b45309;
+        }
+
+        .file-input {
+            display: none;
         }
 
         .inventory-list {
@@ -246,6 +318,15 @@
             border: 1px solid #f1aeb5;
         }
 
+        .warning-message {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeaa7;
+        }
+
         .qr-info {
             background: #e3f2fd;
             padding: 15px;
@@ -264,6 +345,55 @@
             font-size: 0.9rem;
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
         @media (max-width: 480px) {
             .container {
                 padding: 10px;
@@ -276,6 +406,10 @@
             .scan-button {
                 padding: 15px 30px;
                 font-size: 1.1rem;
+            }
+            
+            .backup-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -296,12 +430,6 @@
                 <div class="video-container">
                     <video id="video" autoplay playsinline></video>
                 </div>
-                <!-- <div style="margin-top: 20px;">
-                    <button class="btn btn-secondary" onclick="testMode()" style="width: 100%; padding: 10px;">
-                        🧪 Test (Senza Scanner)
-                    </button>
-                </div> -->
-                <!-- <div id="debugInfo" style="margin-top: 10px; font-size: 0.8rem; color: #666;"></div> -->
             </div>
         </div>
 
@@ -337,11 +465,54 @@
                     <h3>📦 Il Mio Inventario</h3>
                     <span class="inventory-count" id="inventoryCount">0</span>
                 </div>
+
+                <!-- Sezione Backup -->
+                <div class="backup-section">
+                    <h4>💾 Backup Sicurezza</h4>
+                    <div id="backupWarning" class="backup-warning" style="display: none;">
+                        <strong>⚠️ Attenzione!</strong> È passato tempo dall'ultimo backup. Salva i tuoi dati per non perderli!
+                    </div>
+                    <div class="backup-buttons">
+                        <button class="btn btn-success" onclick="exportInventory()">
+                            📥 Esporta
+                        </button>
+                        <button class="btn btn-warning" onclick="document.getElementById('importFile').click()">
+                            📤 Importa
+                        </button>
+                    </div>
+                    <input type="file" id="importFile" class="file-input" accept=".json" onchange="importInventory(this)">
+                    <div class="backup-info" id="backupInfo">
+                        Ultimo backup: Mai effettuato
+                    </div>
+                </div>
+
                 <div class="inventory-list" id="inventoryList">
                     <div class="empty-inventory">
                         Nessun cibo nel freezer.<br>
                         Scansiona un QR code per iniziare!
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per import -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Importa Inventario</h3>
+                <span class="close" onclick="closeImportModal()">&times;</span>
+            </div>
+            <div id="importModalContent">
+                <p>Trovati <span id="importCount">0</span> elementi nel file di backup.</p>
+                <p>Cosa vuoi fare con l'inventario attuale?</p>
+                <div class="modal-buttons">
+                    <button class="btn btn-warning" onclick="importData('replace')">
+                        Sostituisci tutto
+                    </button>
+                    <button class="btn btn-primary" onclick="importData('merge')">
+                        Unisci con esistente
+                    </button>
                 </div>
             </div>
         </div>
@@ -354,6 +525,7 @@
         let stream = null;
         let isScanning = false;
         let jsQRLoaded = false;
+        let importedData = null;
 
         // Verifica se jsQR è caricato
         function checkJsQR() {
@@ -369,31 +541,19 @@
             checkJsQR();
             loadInventory();
             updateInventoryDisplay();
-            // updateDebugInfo();
+            updateBackupInfo();
+            checkBackupReminder();
         });
-
-        // function updateDebugInfo() {
-        //     const debugInfo = document.getElementById('debugInfo');
-        //     const info = [];
-            
-        //     info.push(`jsQR caricato: ${jsQRLoaded ? '✅' : '❌'}`);
-        //     info.push(`HTTPS: ${location.protocol === 'https:' ? '✅' : '❌'}`);
-        //     info.push(`getUserMedia: ${navigator.mediaDevices ? '✅' : '❌'}`);
-            
-        //     debugInfo.innerHTML = info.join(' | ');
-        // }
-
-        // function testMode() {
-        //     const testQR = 'TEST_QR_' + Date.now();
-        //     currentQRCode = testQR; // Imposta il QR code corrente
-        //     showMessage('Modalità test attivata! QR code simulato: ' + testQR, 'success');
-        //     handleQRCode(testQR);
-        // }
 
         function loadInventory() {
             const saved = localStorage.getItem('freezerInventory');
             if (saved) {
-                inventory = JSON.parse(saved);
+                try {
+                    inventory = JSON.parse(saved);
+                } catch (e) {
+                    console.error('Errore nel caricamento inventario:', e);
+                    inventory = {};
+                }
             }
         }
 
@@ -401,26 +561,153 @@
             localStorage.setItem('freezerInventory', JSON.stringify(inventory));
         }
 
+        function updateBackupInfo() {
+            const lastBackup = localStorage.getItem('lastBackupDate');
+            const backupInfoEl = document.getElementById('backupInfo');
+            
+            if (lastBackup) {
+                const date = new Date(lastBackup);
+                const daysDiff = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+                backupInfoEl.innerHTML = `Ultimo backup: ${date.toLocaleDateString('it-IT')} (${daysDiff} giorni fa)`;
+            } else {
+                backupInfoEl.innerHTML = 'Ultimo backup: Mai effettuato';
+            }
+        }
+
+        function checkBackupReminder() {
+            const lastBackup = localStorage.getItem('lastBackupDate');
+            const backupWarningEl = document.getElementById('backupWarning');
+            
+            if (!lastBackup) {
+                // Nessun backup mai fatto - mostra avviso dopo 3 elementi
+                if (Object.keys(inventory).length >= 3) {
+                    backupWarningEl.style.display = 'block';
+                }
+            } else {
+                const daysSinceBackup = Math.floor((Date.now() - new Date(lastBackup).getTime()) / (1000 * 60 * 60 * 24));
+                if (daysSinceBackup >=30) {
+                    backupWarningEl.style.display = 'block';
+                }
+            }
+        }
+
+        function exportInventory() {
+            if (Object.keys(inventory).length === 0) {
+                showMessage('Nessun dato da esportare. Aggiungi qualche cibo prima!', 'warning');
+                return;
+            }
+
+            const exportData = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                inventory: inventory,
+                itemCount: Object.keys(inventory).length
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            
+            const now = new Date();
+            const fileName = `freezer_backup_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}.json`;
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = fileName;
+            link.click();
+            
+            // Aggiorna data ultimo backup
+            localStorage.setItem('lastBackupDate', now.toISOString());
+            updateBackupInfo();
+            document.getElementById('backupWarning').style.display = 'none';
+            
+            showMessage(`Backup esportato con successo! File: ${fileName}`, 'success');
+        }
+
+        function importInventory(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Validazione del file
+                    if (!data.inventory || typeof data.inventory !== 'object') {
+                        throw new Error('File non valido: manca inventario');
+                    }
+
+                    importedData = data.inventory;
+                    document.getElementById('importCount').textContent = Object.keys(importedData).length;
+                    
+                    if (Object.keys(inventory).length > 0) {
+                        // Mostra modal per scegliere modalità import
+                        document.getElementById('importModal').style.display = 'block';
+                    } else {
+                        // Inventario vuoto, importa direttamente
+                        importData('replace');
+                    }
+                    
+                } catch (error) {
+                    showMessage('Errore nell\'importazione: file non valido o corrotto.', 'error');
+                    console.error('Errore import:', error);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset input
+            input.value = '';
+        }
+
+        function importData(mode) {
+            if (!importedData) return;
+
+            try {
+                if (mode === 'replace') {
+                    inventory = { ...importedData };
+                } else if (mode === 'merge') {
+                    inventory = { ...inventory, ...importedData };
+                }
+
+                saveInventory();
+                updateInventoryDisplay();
+                updateBackupInfo();
+                document.getElementById('backupWarning').style.display = 'none';
+                
+                const message = mode === 'replace' ? 
+                    'Inventario sostituito con successo!' : 
+                    'Inventario unito con successo!';
+                showMessage(message, 'success');
+                
+                closeImportModal();
+            } catch (error) {
+                showMessage('Errore durante l\'importazione dei dati.', 'error');
+                console.error('Errore import data:', error);
+            }
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+            importedData = null;
+        }
+
         function showMessage(message, type = 'success') {
             const container = document.getElementById('messageContainer');
-            const className = type === 'success' ? 'success-message' : 'error-message';
+            let className = 'success-message';
+            
+            if (type === 'error') className = 'error-message';
+            else if (type === 'warning') className = 'warning-message';
+            
             container.innerHTML = `<div class="${className}">${message}</div>`;
             
             setTimeout(() => {
                 container.innerHTML = '';
-            }, 3000);
+            }, 4000);
         }
 
         function startScanning() {
-            console.log('startScanning chiamato');
-            // updateDebugInfo();
+            if (isScanning) return;
             
-            if (isScanning) {
-                console.log('Già in scansione');
-                return;
-            }
-            
-            // Verifica se jsQR è caricato
             if (!jsQRLoaded) {
                 console.log('jsQR non caricato');
                 showMessage('Caricamento in corso... Riprova tra un momento.', 'error');
@@ -464,7 +751,7 @@
                 });
             }).catch(function(err) {
                 console.error('Errore fotocamera:', err);
-                showMessage('Errore fotocamera: ' + err.message + '. Usa il pulsante TEST per provare l\'app.', 'error');
+                showMessage('Errore fotocamera: ' + err.message, 'error');
             });
         }
 
@@ -502,7 +789,7 @@
             try {
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
                 
-                if (code && code != "") {
+                if (code && code.data) {
                     currentQRCode = code.data;
                     stopScanning();
                     handleQRCode(code.data);
@@ -607,6 +894,7 @@
             
             saveInventory();
             updateInventoryDisplay();
+            checkBackupReminder();
             
             const message = wasUpdate ? 
                 `"${foodName}" è stato aggiornato nell'inventario.` : 
@@ -640,6 +928,14 @@
                             <p>QR: ${qrCode.substring(0, 20)}${qrCode.length > 20 ? '...' : ''}</p>
                         </div>
                     `).join('');
+            }
+        }
+
+        // Chiusura modal con click esterno
+        window.onclick = function(event) {
+            const modal = document.getElementById('importModal');
+            if (event.target === modal) {
+                closeImportModal();
             }
         }
 
